@@ -31,3 +31,6 @@ export function predictStroke(patientData) {
   return apiClient.post('/predict', patientData)
 }
 
+export function predictAllModels(patientData) {
+  return apiClient.post('/predict-all', patientData)
+}

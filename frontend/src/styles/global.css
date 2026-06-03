@@ -300,6 +300,34 @@ pre {
   color: #17324d;
 }
 
+.multi-model-card {
+  width: 100%;
+}
+
+.multi-model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.model-result-card {
+  border-radius: 18px;
+  border: 1px solid rgba(43, 122, 141, 0.14);
+  background: linear-gradient(180deg, #f7fbfc 0%, #edf4f7 100%);
+  padding: 1rem;
+}
+
+.model-result-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: #17324d;
+}
+
+.model-result-card p {
+  margin: 0.35rem 0;
+}
+
 .error-text {
   color: #b91c1c;
   font-weight: 600;

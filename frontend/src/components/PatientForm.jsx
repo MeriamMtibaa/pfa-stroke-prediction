@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { getFormOptions, getSamplePatient, predictStroke } from '../api/strokeApi'
+import { getFormOptions, getSamplePatient, predictAllModels, predictStroke } from '../api/strokeApi'
 
 const initialFormData = {
   gender: '',
@@ -15,7 +15,7 @@ const initialFormData = {
   smoking_status: '',
 }
 
-function PatientForm({ onPrediction }) {
+function PatientForm({ onPrediction, onAllPredictions }) {
   const [formOptions, setFormOptions] = useState(null)
   const [samplePatient, setSamplePatient] = useState(null)
   const [formData, setFormData] = useState(initialFormData)
@@ -109,10 +109,18 @@ function PatientForm({ onPrediction }) {
     setError('')
 
     try {
-      const response = await predictStroke(patientData)
+      const [response, allModelsResponse] = await Promise.all([
+        predictStroke(patientData),
+        predictAllModels(patientData),
+      ])
+
       onPrediction({
         request: patientData,
         response: response.data,
+      })
+      onAllPredictions?.({
+        request: patientData,
+        response: allModelsResponse.data,
       })
     } catch (submitError) {
       const message =
@@ -121,6 +129,11 @@ function PatientForm({ onPrediction }) {
         'Erreur lors de la prediction.'
       setError(message)
       onPrediction({
+        request: patientData,
+        response: null,
+        error: message,
+      })
+      onAllPredictions?.({
         request: patientData,
         response: null,
         error: message,

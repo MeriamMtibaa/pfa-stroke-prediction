@@ -15,6 +15,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 MODEL_PATH = PROJECT_ROOT / "models" / "final_model.joblib"
 METRICS_PATH = PROJECT_ROOT / "reports" / "metrics_pca.json"
 MODEL_NAME = "logistic_regression_pca"
+AVAILABLE_MODELS = {
+    "logistic_regression_pca": PROJECT_ROOT / "models" / "logistic_regression_pca.joblib",
+    "random_forest_pca": PROJECT_ROOT / "models" / "random_forest_pca.joblib",
+    "xgboost_pca": PROJECT_ROOT / "models" / "xgboost_pca.joblib",
+}
 EXPECTED_FEATURES = [
     "gender",
     "age",
@@ -71,7 +76,15 @@ async def lifespan(app: FastAPI):
     if not MODEL_PATH.exists():
         raise RuntimeError(f"Modele final introuvable: {MODEL_PATH}")
 
+    missing_models = [name for name, path in AVAILABLE_MODELS.items() if not path.exists()]
+    if missing_models:
+        raise RuntimeError(f"Modeles PCA introuvables: {', '.join(missing_models)}")
+
     app.state.model = joblib.load(MODEL_PATH)
+    app.state.models = {
+        model_name: joblib.load(model_path)
+        for model_name, model_path in AVAILABLE_MODELS.items()
+    }
     yield
 
 
@@ -118,6 +131,7 @@ def model_info() -> dict:
     return {
         "model_name": MODEL_NAME,
         "model_path": str(MODEL_PATH),
+        "available_models": list(AVAILABLE_MODELS.keys()),
         "expected_features": EXPECTED_FEATURES,
         "pipeline_type": "preprocessing + PCA + SMOTE + logistic regression",
     }
@@ -155,20 +169,11 @@ def get_sample_patient() -> dict:
     return SAMPLE_PATIENT
 
 
-@app.post("/predict")
-def predict(patient: PatientInput) -> dict:
-    """Effectue une prediction de risque d'AVC pour un patient."""
-    if not hasattr(app.state, "model"):
-        raise HTTPException(status_code=503, detail="Le modele n'est pas charge.")
+def build_prediction_response(model, input_df: pd.DataFrame, model_name: str) -> dict:
+    """Construit une reponse de prediction standardisee pour un modele."""
+    prediction = int(model.predict(input_df)[0])
+    probability = float(model.predict_proba(input_df)[0][1])
 
-    try:
-        input_df = pd.DataFrame([patient.model_dump()], columns=EXPECTED_FEATURES)
-        prediction = int(app.state.model.predict(input_df)[0])
-        probability = float(app.state.model.predict_proba(input_df)[0][1])
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la prediction: {exc}") from exc
-
-    risk_percentage = round(probability * 100, 2)
     if probability >= 0.7:
         interpretation = "Risque eleve"
     elif probability >= 0.4:
@@ -180,7 +185,38 @@ def predict(patient: PatientInput) -> dict:
         "prediction": prediction,
         "label": "Risque eleve d'AVC" if prediction == 1 else "Risque faible d'AVC",
         "risk_probability": probability,
-        "risk_percentage": risk_percentage,
+        "risk_percentage": round(probability * 100, 2),
         "interpretation": interpretation,
-        "model_used": MODEL_NAME,
+        "model_used": model_name,
     }
+
+
+@app.post("/predict")
+def predict(patient: PatientInput) -> dict:
+    """Effectue une prediction de risque d'AVC pour un patient."""
+    if not hasattr(app.state, "model"):
+        raise HTTPException(status_code=503, detail="Le modele n'est pas charge.")
+
+    try:
+        input_df = pd.DataFrame([patient.model_dump()], columns=EXPECTED_FEATURES)
+        return build_prediction_response(app.state.model, input_df, MODEL_NAME)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la prediction: {exc}") from exc
+
+
+@app.post("/predict-all")
+def predict_all(patient: PatientInput) -> dict:
+    """Execute la prediction sur les trois modeles PCA disponibles."""
+    if not hasattr(app.state, "models"):
+        raise HTTPException(status_code=503, detail="Les modeles ne sont pas charges.")
+
+    try:
+        input_df = pd.DataFrame([patient.model_dump()], columns=EXPECTED_FEATURES)
+        predictions = {
+            model_name: build_prediction_response(model, input_df, model_name)
+            for model_name, model in app.state.models.items()
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la prediction multi-modeles: {exc}") from exc
+
+    return {"models": predictions}

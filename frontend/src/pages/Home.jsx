@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+import MultiModelResults from '../components/MultiModelResults'
 import PatientForm from '../components/PatientForm'
 import PredictionCard from '../components/PredictionCard'
 import { getHealth, getMetrics, getModelInfo } from '../api/strokeApi'
@@ -9,6 +10,7 @@ function Home() {
   const [modelInfo, setModelInfo] = useState(null)
   const [metrics, setMetrics] = useState(null)
   const [predictionResult, setPredictionResult] = useState(null)
+  const [allPredictions, setAllPredictions] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -142,8 +144,15 @@ function Home() {
       </section>
 
       <section className="page-grid">
-        <PatientForm onPrediction={setPredictionResult} />
+        <PatientForm
+          onPrediction={setPredictionResult}
+          onAllPredictions={setAllPredictions}
+        />
         <PredictionCard predictionResult={predictionResult} />
+      </section>
+
+      <section className="page-grid">
+        <MultiModelResults allPredictions={allPredictions} />
       </section>
     </main>
   )
