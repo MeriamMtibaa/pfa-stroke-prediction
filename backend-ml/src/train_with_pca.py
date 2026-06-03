@@ -29,6 +29,7 @@ PCA_COMPONENTS = 11
 
 def build_model_pipelines(preprocessor) -> dict[str, Pipeline]:
     """Construit les pipelines imblearn avec PCA pour chaque modele."""
+    # On repart du meme preprocessing que sans PCA pour que la comparaison reste honnete.
     base_transformer = clone(preprocessor.named_steps["preprocessor"])
 
     return {
@@ -126,6 +127,7 @@ def build_comparison_summary(baseline_metrics: dict, pca_metrics: dict) -> str:
         "## Synthese par modele",
     ]
 
+    # On compare modele par modele pour voir si la reduction de dimension aide vraiment.
     for model_name in ["logistic_regression", "random_forest", "xgboost"]:
         baseline = baseline_metrics[model_name]
         with_pca = pca_metrics[model_name]
@@ -195,6 +197,7 @@ def print_metrics_table(metrics_by_model: dict[str, dict]) -> None:
 if __name__ == "__main__":
     X, y, preprocessor = load_and_preprocess_data()
 
+    # Meme split que dans train.py pour garder des resultats comparables.
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,

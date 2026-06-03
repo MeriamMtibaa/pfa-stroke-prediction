@@ -14,6 +14,7 @@ function AboutModel() {
       setError('')
 
       try {
+        // On garde la page simple : juste assez de donnees pour expliquer le choix du modele.
         const [infoResponse, metricsResponse] = await Promise.all([
           getModelInfo(),
           getMetrics(),

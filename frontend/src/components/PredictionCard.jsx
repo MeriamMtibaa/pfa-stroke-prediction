@@ -8,6 +8,7 @@ function PredictionCard({ predictionResult }) {
         <p className="error-text">{predictionResult.error}</p>
       ) : (
         <>
+          {/* On garde un resume lisible avant le JSON complet pour le rapport et la demo. */}
           <p>
             <strong>Prediction :</strong> {predictionResult.response?.prediction}
           </p>

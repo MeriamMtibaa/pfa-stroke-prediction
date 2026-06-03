@@ -72,6 +72,7 @@ def build_summary(df: pd.DataFrame, summary_path: Path) -> None:
     stroke_percentages = (df["stroke"].value_counts(normalize=True).sort_index() * 100).round(2)
     missing_bmi = int(df["bmi"].isna().sum())
 
+    # On met surtout en avant les signaux qui pourront guider la suite du preprocessing.
     numeric_corr = df.select_dtypes(include=["number"]).corr(numeric_only=True)["stroke"].drop("stroke")
     top_corr = numeric_corr.abs().sort_values(ascending=False).head(3)
 
@@ -149,6 +150,7 @@ def main() -> None:
 
     figures_dir.mkdir(parents=True, exist_ok=True)
 
+    # Ici on travaille sur le dataset brut pour garder une vraie photo des donnees de depart.
     df = pd.read_csv(dataset_path)
 
     plot_target_distribution(df, figures_dir)

@@ -38,6 +38,7 @@ def build_model_pipelines(preprocessor) -> dict[str, Pipeline]:
             steps=[
                 ("preprocessor", clone(base_transformer)),
                 ("smote", SMOTE(random_state=42)),
+                # Logistic Regression sert de base simple et interpretable pour comparer les autres modeles.
                 ("model", LogisticRegression(max_iter=1000, random_state=42)),
             ]
         ),
@@ -152,7 +153,7 @@ if __name__ == "__main__":
 
     model_pipelines = build_model_pipelines(preprocessor)
 
-    # Entraîne chaque pipeline, évalue les performances et sauvegarde les artefacts.
+    # On garde la meme boucle pour tous les modeles afin de comparer dans des conditions identiques.
     metrics_by_model = {}
     model_filenames = {
         "logistic_regression": "logistic_regression.joblib",

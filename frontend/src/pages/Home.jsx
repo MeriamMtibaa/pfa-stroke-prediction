@@ -20,6 +20,7 @@ function Home() {
       setError('')
 
       try {
+        // Ces infos alimentent les cartes d'accueil sans attendre plusieurs rechargements.
         const [healthResponse, modelInfoResponse, metricsResponse] = await Promise.all([
           getHealth(),
           getModelInfo(),
@@ -144,6 +145,7 @@ function Home() {
       </section>
 
       <section className="page-grid">
+        {/* Le formulaire reste au centre de la page, puis la prediction s'affiche juste a cote. */}
         <PatientForm
           onPrediction={setPredictionResult}
           onAllPredictions={setAllPredictions}
@@ -152,6 +154,7 @@ function Home() {
       </section>
 
       <section className="page-grid">
+        {/* Cette section sert surtout a comparer visuellement les trois modeles demandes par le sujet. */}
         <MultiModelResults allPredictions={allPredictions} />
       </section>
     </main>

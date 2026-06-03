@@ -36,7 +36,8 @@ def load_and_preprocess_data() -> tuple[pd.DataFrame, pd.Series, Pipeline]:
     X = df.drop(columns=["stroke"])
     y = df["stroke"]
 
-    # Détecte automatiquement les colonnes par type pour garder le code réutilisable.
+    # Comme le schema peut evoluer, on evite de figer les colonnes en dur.
+    # Ca rend le preprocessing plus facile a reutiliser dans les scripts suivants.
     numeric_features = X.select_dtypes(include=["number"]).columns.tolist()
     categorical_features = X.select_dtypes(include=["object", "string", "category"]).columns.tolist()
 
@@ -92,6 +93,7 @@ def save_preprocessor(preprocessor: Pipeline) -> Path:
 
 if __name__ == "__main__":
     X, y, preprocessor = load_and_preprocess_data()
+    # Ce petit bloc sert juste a verifier rapidement que le pipeline transforme bien les donnees.
     X_transformed = preprocessor.fit_transform(X, y)
 
     feature_names = preprocessor.named_steps["preprocessor"].get_feature_names_out()

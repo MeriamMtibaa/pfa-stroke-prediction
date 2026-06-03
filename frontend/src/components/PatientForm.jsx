@@ -29,6 +29,7 @@ function PatientForm({ onPrediction, onAllPredictions }) {
       setError('')
 
       try {
+        // On charge tout ensemble pour que le formulaire soit pret plus vite.
         const [optionsResponse, sampleResponse] = await Promise.all([
           getFormOptions(),
           getSamplePatient(),
@@ -57,6 +58,7 @@ function PatientForm({ onPrediction, onAllPredictions }) {
   function handleLoadSample() {
     if (!samplePatient) return
 
+    // L'exemple backend permet de tester vite le formulaire sans tout saisir a la main.
     setFormData({
       ...samplePatient,
       age: String(samplePatient.age),
@@ -109,6 +111,7 @@ function PatientForm({ onPrediction, onAllPredictions }) {
     setError('')
 
     try {
+      // On garde la prediction finale et la comparaison des 3 modeles dans le meme envoi.
       const [response, allModelsResponse] = await Promise.all([
         predictStroke(patientData),
         predictAllModels(patientData),

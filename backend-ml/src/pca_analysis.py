@@ -46,6 +46,7 @@ def main() -> None:
 
     # Applique le preprocessing complet avant la reduction de dimension.
     X_preprocessed = preprocessor.fit_transform(X, y)
+    # PCA travaille plus simplement sur une matrice dense.
     X_preprocessed_dense = ensure_dense(X_preprocessed)
 
     initial_feature_count = X_preprocessed_dense.shape[1]
@@ -57,7 +58,7 @@ def main() -> None:
     explained_variance_ratio = full_pca.explained_variance_ratio_
     cumulative_variance_ratio = np.cumsum(explained_variance_ratio)
 
-    # Recherche le nombre minimal de composantes necessaire pour atteindre 95%.
+    # Le seuil de 95% donne un bon compromis entre simplification et perte d'information.
     n_components_95 = int(np.searchsorted(cumulative_variance_ratio, 0.95) + 1)
     retained_variance = float(cumulative_variance_ratio[n_components_95 - 1] * 100)
 

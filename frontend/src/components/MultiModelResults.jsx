@@ -5,6 +5,7 @@ const MODEL_ORDER = [
 ]
 
 function MultiModelResults({ allPredictions }) {
+  // L'ordre fixe evite que les cartes changent de place d'un rendu a l'autre.
   const modelResults = allPredictions?.response?.models
 
   return (

@@ -15,6 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 MODEL_PATH = PROJECT_ROOT / "models" / "final_model.joblib"
 METRICS_PATH = PROJECT_ROOT / "reports" / "metrics_pca.json"
 MODEL_NAME = "logistic_regression_pca"
+# On garde la liste ici pour centraliser les modeles exposes par l'API.
 AVAILABLE_MODELS = {
     "logistic_regression_pca": PROJECT_ROOT / "models" / "logistic_regression_pca.joblib",
     "random_forest_pca": PROJECT_ROOT / "models" / "random_forest_pca.joblib",
@@ -80,6 +81,7 @@ async def lifespan(app: FastAPI):
     if missing_models:
         raise RuntimeError(f"Modeles PCA introuvables: {', '.join(missing_models)}")
 
+    # On charge tout au demarrage pour eviter un premier appel plus lent cote API.
     app.state.model = joblib.load(MODEL_PATH)
     app.state.models = {
         model_name: joblib.load(model_path)
@@ -174,6 +176,7 @@ def build_prediction_response(model, input_df: pd.DataFrame, model_name: str) ->
     prediction = int(model.predict(input_df)[0])
     probability = float(model.predict_proba(input_df)[0][1])
 
+    # Les seuils restent simples pour garder une lecture claire cote frontend.
     if probability >= 0.7:
         interpretation = "Risque eleve"
     elif probability >= 0.4:
@@ -212,6 +215,7 @@ def predict_all(patient: PatientInput) -> dict:
 
     try:
         input_df = pd.DataFrame([patient.model_dump()], columns=EXPECTED_FEATURES)
+        # Le frontend compare ensuite les trois sorties sans refaire d'appel supplementaire.
         predictions = {
             model_name: build_prediction_response(model, input_df, model_name)
             for model_name, model in app.state.models.items()
