@@ -16,14 +16,14 @@
 - Precision : sans PCA = **0.0976**, avec PCA = **0.1279**, delta = **+0.0303**
 - Recall : sans PCA = **0.0800**, avec PCA = **0.2200**, delta = **+0.1400**
 - F1-score : sans PCA = **0.0879**, avec PCA = **0.1618**, delta = **+0.0739**
-- ROC-AUC : sans PCA = **0.7497**, avec PCA = **0.7813**, delta = **+0.0316**
+- ROC-AUC : sans PCA = **0.7497**, avec PCA = **0.7812**, delta = **+0.0315**
 
 ### xgboost
 - Accuracy : sans PCA = **0.9227**, avec PCA = **0.8601**, delta = **-0.0626**
-- Precision : sans PCA = **0.2157**, avec PCA = **0.1026**, delta = **-0.1131**
-- Recall : sans PCA = **0.2200**, avec PCA = **0.2400**, delta = **+0.0200**
-- F1-score : sans PCA = **0.2178**, avec PCA = **0.1437**, delta = **-0.0741**
-- ROC-AUC : sans PCA = **0.7891**, avec PCA = **0.7631**, delta = **-0.0260**
+- Precision : sans PCA = **0.2157**, avec PCA = **0.1157**, delta = **-0.1000**
+- Recall : sans PCA = **0.2200**, avec PCA = **0.2800**, delta = **+0.0600**
+- F1-score : sans PCA = **0.2178**, avec PCA = **0.1637**, delta = **-0.0541**
+- ROC-AUC : sans PCA = **0.7891**, avec PCA = **0.7725**, delta = **-0.0167**
 
 ## Conclusion
 - Meilleur F1-score sans PCA : **logistic_regression** avec **0.2395**.
