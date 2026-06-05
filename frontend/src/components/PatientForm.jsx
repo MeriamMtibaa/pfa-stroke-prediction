@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-
+import { motion } from 'framer-motion'
+import { User, Heart, Activity, TrendingUp, Loader2, FileUser } from 'lucide-react'
 import { getFormOptions, getSamplePatient, predictAllModels, predictStroke } from '../api/strokeApi'
 
 const initialFormData = {
@@ -22,6 +23,7 @@ function PatientForm({ onPrediction, onAllPredictions }) {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [currentSection, setCurrentSection] = useState(0)
 
   useEffect(() => {
     async function loadFormData() {
@@ -29,7 +31,6 @@ function PatientForm({ onPrediction, onAllPredictions }) {
       setError('')
 
       try {
-        // On charge tout ensemble pour que le formulaire soit pret plus vite.
         const [optionsResponse, sampleResponse] = await Promise.all([
           getFormOptions(),
           getSamplePatient(),
@@ -38,7 +39,7 @@ function PatientForm({ onPrediction, onAllPredictions }) {
         setFormOptions(optionsResponse.data)
         setSamplePatient(sampleResponse.data)
       } catch (loadError) {
-        setError(loadError.message || 'Erreur lors du chargement du formulaire.')
+        setError(loadError.message || 'Error loading form data')
       } finally {
         setLoading(false)
       }
@@ -58,7 +59,6 @@ function PatientForm({ onPrediction, onAllPredictions }) {
   function handleLoadSample() {
     if (!samplePatient) return
 
-    // L'exemple backend permet de tester vite le formulaire sans tout saisir a la main.
     setFormData({
       ...samplePatient,
       age: String(samplePatient.age),
@@ -75,11 +75,11 @@ function PatientForm({ onPrediction, onAllPredictions }) {
     const missingField = requiredFields.find(([, value]) => value === '')
 
     if (missingField) {
-      return 'Tous les champs du patient doivent etre renseignes.'
+      return 'All patient fields are required'
     }
 
     if (Number(formData.age) < 0 || Number(formData.avg_glucose_level) < 0 || Number(formData.bmi) < 0) {
-      return 'Les valeurs numeriques doivent etre positives.'
+      return 'Numeric values must be positive'
     }
 
     return ''
@@ -87,6 +87,8 @@ function PatientForm({ onPrediction, onAllPredictions }) {
 
   async function handleSubmit(event) {
     event.preventDefault()
+    
+    console.log('Form submission started')
 
     const validationError = validateForm()
     if (validationError) {
@@ -107,173 +109,212 @@ function PatientForm({ onPrediction, onAllPredictions }) {
       smoking_status: formData.smoking_status,
     }
 
+    console.log('Patient data:', patientData)
+
     setSubmitting(true)
     setError('')
 
     try {
-      // On garde la prediction finale et la comparaison des 3 modeles dans le meme envoi.
+      console.log('Calling prediction APIs...')
       const [response, allModelsResponse] = await Promise.all([
         predictStroke(patientData),
         predictAllModels(patientData),
       ])
 
+      console.log('Prediction response:', response.data)
+      console.log('All models response:', allModelsResponse.data)
+
       onPrediction({
         request: patientData,
         response: response.data,
       })
-      onAllPredictions?.({
-        request: patientData,
-        response: allModelsResponse.data,
-      })
+      
+      if (onAllPredictions) {
+        onAllPredictions({
+          request: patientData,
+          response: allModelsResponse.data,
+        })
+      }
+      
+      console.log('Prediction completed successfully')
     } catch (submitError) {
+      console.error('Prediction error:', submitError)
       const message =
         submitError.response?.data?.detail ||
         submitError.message ||
-        'Erreur lors de la prediction.'
+        'Prediction error'
       setError(message)
       onPrediction({
         request: patientData,
         response: null,
         error: message,
       })
-      onAllPredictions?.({
-        request: patientData,
-        response: null,
-        error: message,
-      })
+      if (onAllPredictions) {
+        onAllPredictions({
+          request: patientData,
+          response: null,
+          error: message,
+        })
+      }
     } finally {
       setSubmitting(false)
+      console.log('Form submission ended')
     }
   }
 
+  const sections = [
+    {
+      title: 'Demographics',
+      icon: User,
+      fields: ['gender', 'age', 'ever_married', 'work_type', 'Residence_type']
+    },
+    {
+      title: 'Medical History',
+      icon: Heart,
+      fields: ['hypertension', 'heart_disease']
+    },
+    {
+      title: 'Lifestyle',
+      icon: Activity,
+      fields: ['smoking_status']
+    },
+    {
+      title: 'Clinical Metrics',
+      icon: TrendingUp,
+      fields: ['avg_glucose_level', 'bmi']
+    }
+  ]
+
+  const fieldLabels = {
+    gender: 'Gender',
+    age: 'Age',
+    hypertension: 'Hypertension',
+    heart_disease: 'Heart Disease',
+    ever_married: 'Marital Status',
+    work_type: 'Work Type',
+    Residence_type: 'Residence Type',
+    avg_glucose_level: 'Average Glucose Level (mg/dL)',
+    bmi: 'BMI (kg/m²)',
+    smoking_status: 'Smoking Status',
+  }
+
   return (
-    <section className="card">
-      <h2>Patient Form</h2>
-      <p>Renseignez les informations du patient puis lancez la prediction.</p>
-
-      {loading ? <p>Chargement des options du formulaire...</p> : null}
-      {error ? <p className="error-text">{error}</p> : null}
-
-      <div className="button-row">
-        <button type="button" onClick={handleLoadSample} disabled={!samplePatient || loading}>
-          Charger exemple patient
+    <motion.div
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.2, duration: 0.5 }}
+      className="glass-card rounded-3xl p-8"
+    >
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-2xl font-bold text-slate-900">Patient Assessment</h3>
+          <p className="text-slate-500 mt-1">Enter patient information for risk analysis</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleLoadSample}
+          disabled={!samplePatient || loading}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-sky-600 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors disabled:opacity-50"
+        >
+          <FileUser className="w-4 h-4" />
+          Load Sample
         </button>
       </div>
 
-      <form className="patient-form" onSubmit={handleSubmit}>
-        <label>
-          Gender
-          <select name="gender" value={formData.gender} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.gender?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+      {error && (
+        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+          {error}
+        </div>
+      )}
 
-        <label>
-          Age
-          <input name="age" type="number" min="0" step="0.1" value={formData.age} onChange={handleChange} />
-        </label>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Section navigation */}
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {sections.map((section, index) => {
+            const Icon = section.icon
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={() => setCurrentSection(index)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                  currentSection === index
+                    ? 'bg-slate-900 text-white shadow-md'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {section.title}
+              </button>
+            )
+          })}
+        </div>
 
-        <label>
-          Hypertension
-          <select name="hypertension" value={formData.hypertension} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.hypertension?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+        {/* Form fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {sections[currentSection].fields.map((fieldName) => {
+            const isSelect = ['gender', 'hypertension', 'heart_disease', 'ever_married', 'work_type', 'Residence_type', 'smoking_status'].includes(fieldName)
+            const isNumber = ['age', 'avg_glucose_level', 'bmi'].includes(fieldName)
 
-        <label>
-          Heart disease
-          <select name="heart_disease" value={formData.heart_disease} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.heart_disease?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
+            return (
+              <div key={fieldName} className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  {fieldLabels[fieldName]}
+                </label>
+                {isSelect ? (
+                  <select
+                    name={fieldName}
+                    value={formData[fieldName]}
+                    onChange={handleChange}
+                    className="input-field"
+                    disabled={loading || submitting}
+                  >
+                    <option value="">Select...</option>
+                    {formOptions?.[fieldName]?.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    name={fieldName}
+                    type={isNumber ? 'number' : 'text'}
+                    min={isNumber ? '0' : undefined}
+                    step={fieldName === 'avg_glucose_level' ? '0.01' : '0.1'}
+                    value={formData[fieldName]}
+                    onChange={handleChange}
+                    className="input-field"
+                    disabled={loading || submitting}
+                  />
+                )}
+              </div>
+            )
+          })}
+        </div>
 
-        <label>
-          Ever married
-          <select name="ever_married" value={formData.ever_married} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.ever_married?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Work type
-          <select name="work_type" value={formData.work_type} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.work_type?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Residence type
-          <select name="Residence_type" value={formData.Residence_type} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.Residence_type?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Avg glucose level
-          <input
-            name="avg_glucose_level"
-            type="number"
-            min="0"
-            step="0.01"
-            value={formData.avg_glucose_level}
-            onChange={handleChange}
-          />
-        </label>
-
-        <label>
-          BMI
-          <input name="bmi" type="number" min="0" step="0.1" value={formData.bmi} onChange={handleChange} />
-        </label>
-
-        <label>
-          Smoking status
-          <select name="smoking_status" value={formData.smoking_status} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.smoking_status?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="button-row">
-          <button type="submit" disabled={submitting || loading}>
-            {submitting ? 'Prediction en cours...' : 'Predire le risque'}
+        {/* Submit button */}
+        <div className="flex gap-4 pt-4">
+          <button
+            type="submit"
+            disabled={submitting || loading}
+            className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <Activity className="w-5 h-5" />
+                Predict Risk
+              </>
+            )}
           </button>
         </div>
       </form>
-    </section>
+    </motion.div>
   )
 }
 
