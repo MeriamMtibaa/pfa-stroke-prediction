@@ -1,0 +1,755 @@
+\documentclass[12pt,a4paper]{report}
+
+% ============================
+% Préambule
+% ============================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\geometry{top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.5cm}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{setspace}
+\usepackage{tocloft}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{csquotes}
+
+\graphicspath{{figures/}}
+\onehalfspacing
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  citecolor=black,
+  pdftitle={Rapport PFA - Prédiction du risque d'AVC},
+  pdfauthor={Chahine Omri, Meriam Mtibaa, Yassine Aniba},
+  pdfsubject={Machine Learning, FastAPI, React, prédiction AVC}
+}
+
+\setlength{\headheight}{15pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{PFA -- iTeam University}
+\rhead{}
+\cfoot{\thepage}
+
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codeframe}{RGB}{220,220,220}
+\definecolor{accent}{RGB}{45,88,180}
+
+\lstdefinestyle{pfastyle}{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  frame=single,
+  rulecolor=\color{codeframe},
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=2,
+  columns=fullflexible
+}
+\lstset{style=pfastyle}
+
+\titleformat{\chapter}[display]
+  {\bfseries\Huge}
+  {\filleft\Large\chaptertitlename~\thechapter}
+  {1ex}
+  {\titlerule\vspace{1ex}\filright}
+  [\vspace{1ex}\titlerule]
+
+\newcommand{\projecttitle}{Application de prédiction du risque d'AVC basée sur le Machine Learning}
+\newcommand{\studentname}{\begin{tabular}[t]{@{}l@{}}Chahine Omri\\Meriam Mtibaa\\Yassine Aniba\end{tabular}}
+\newcommand{\academicadvisor}{[Nom de l'encadrant académique]}
+\newcommand{\institution}{iTeam University}
+\newcommand{\major}{[Filière]}
+\newcommand{\period}{Année universitaire 2025--2026}
+
+\begin{document}
+
+% ============================
+% Page de garde
+% ============================
+\begin{titlepage}
+\centering
+\vspace*{0.5cm}
+{\Large \textbf{\institution}}\\[0.2cm]
+{\large \major}\\[1.5cm]
+
+\rule{\textwidth}{0.8pt}\\[0.5cm]
+{\Huge \bfseries Rapport de Projet de Fin d'Année}\\[0.7cm]
+{\LARGE \bfseries \projecttitle}\\[0.5cm]
+\rule{\textwidth}{0.8pt}\\[1.5cm]
+
+\begin{tabularx}{\textwidth}{>{\bfseries}l X}
+Étudiants : & \studentname \\[0.3cm]
+Encadrant académique : & \academicadvisor \\[0.3cm]
+Année universitaire : & 2025--2026 \\
+\end{tabularx}
+
+\vfill
+{\large Soutenu devant le jury de \institution}\\[0.4cm]
+{\large \today}
+\end{titlepage}
+
+\pagenumbering{roman}
+
+% ============================
+% Remerciements
+% ============================
+\chapter*{Remerciements}
+\addcontentsline{toc}{chapter}{Remerciements}
+Nous tenons à exprimer notre profonde gratitude à toutes les personnes qui ont contribué à la réalisation de ce projet de fin d'année au sein de \institution. Nous remercions tout d'abord notre encadrant académique, \academicadvisor, pour son accompagnement, ses conseils méthodologiques et ses remarques constructives tout au long du projet.
+
+Nos remerciements s'adressent également à l'ensemble du corps enseignant de \institution{} pour la qualité de la formation dispensée et le cadre académique stimulant qui a permis de développer les compétences nécessaires à la réalisation d'une solution logicielle complète. Enfin, nous remercions nos familles, nos amis et nos collègues pour leur soutien moral et leurs encouragements constants tout au long de ce projet.
+
+% ============================
+% Résumé et abstract
+% ============================
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+Ce rapport présente la conception et la réalisation d'une application web de prédiction du risque d'accident vasculaire cérébral (AVC) à partir de données cliniques et démographiques, réalisée dans le cadre du Projet de Fin d'Année à \institution. Le projet s'inscrit dans une démarche d'aide à la décision, où l'objectif principal est de fournir une estimation rapide du risque en exploitant un modèle de Machine Learning entraîné sur le dataset \textit{Stroke Prediction}. La solution développée repose sur une architecture composée d'un backend FastAPI, d'un frontend React avec Vite, et d'un pipeline d'apprentissage automatique intégrant le prétraitement des données, la réduction de dimension par PCA, le rééquilibrage des classes par SMOTE et une régression logistique comme modèle final.
+
+L'étude exploratoire a mis en évidence un déséquilibre important de la variable cible, avec une proportion réduite de cas positifs. Pour cette raison, le projet privilégie le rappel plutôt que la seule précision globale, car les faux négatifs représentent un risque plus critique dans un contexte médical. Les expérimentations ont comparé trois familles de modèles : régression logistique, Random Forest et XGBoost, avec et sans PCA. Le modèle final retenu est la régression logistique avec PCA, qui atteint un rappel de 0,80 et un ROC-AUC de 0,8421.
+
+\textbf{Mots-clés :} AVC, Machine Learning, FastAPI, React, PCA, SMOTE, régression logistique, aide à la décision.
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+This report presents the design and implementation of a web application for predicting stroke risk based on clinical and demographic patient data, carried out as a Final Year Project at \institution. The project follows a decision-support approach, aiming to provide a fast risk estimation using a Machine Learning model trained on the Stroke Prediction dataset. The developed solution is based on a FastAPI backend, a React/Vite frontend, and a Machine Learning pipeline that includes data preprocessing, dimensionality reduction with PCA, class balancing using SMOTE, and Logistic Regression as the final model.
+
+The exploratory analysis revealed a highly imbalanced target variable, with a low proportion of positive stroke cases. Therefore, the project prioritizes recall rather than global accuracy, since false negatives are more critical in a medical context. The experiments compared Logistic Regression, Random Forest, and XGBoost, both with and without PCA. The selected final model is Logistic Regression with PCA, achieving a recall of 0.80 and a ROC-AUC of 0.8421.
+
+\textbf{Keywords:} Stroke, Machine Learning, FastAPI, React, PCA, SMOTE, Logistic Regression, decision support.
+
+\tableofcontents
+\listoffigures
+\listoftables
+\clearpage
+\pagenumbering{arabic}
+
+% ============================================================
+\chapter{Introduction, Contexte et Problématique}
+% ============================================================
+
+\section{Contexte général}
+L'évolution des technologies numériques a profondément transformé les domaines de la santé, de l'analyse de données et de l'aide à la décision. Les systèmes modernes ne se limitent plus à la simple gestion d'informations : ils permettent aussi d'extraire des connaissances à partir de volumes de données importants, de repérer des tendances et de produire des estimations utiles pour la prise de décision. Dans ce contexte, le Machine Learning occupe une place centrale, car il permet de construire des modèles capables d'apprendre des relations entre des variables explicatives et une cible à prédire.
+
+L'accident vasculaire cérébral représente un problème de santé majeur au niveau mondial. Il peut entraîner des conséquences graves, notamment des séquelles neurologiques, une perte d'autonomie ou le décès. Les facteurs de risque tels que l'âge, l'hypertension, les maladies cardiaques, le niveau moyen de glucose, l'indice de masse corporelle et le tabagisme peuvent contribuer à l'évaluation du risque. La disponibilité de jeux de données structurés permet donc d'expérimenter des modèles prédictifs destinés à appuyer l'analyse médicale.
+
+Ce projet de fin d'année, réalisé au sein de \institution, consiste à développer une application web permettant d'estimer le risque d'AVC à partir des informations saisies par l'utilisateur. La solution proposée n'a pas vocation à remplacer un diagnostic médical, mais à illustrer comment un pipeline de Machine Learning peut être intégré dans une application web complète.
+
+\section{Motivation du projet}
+La motivation principale du projet est double. D'une part, il s'agit d'exploiter les techniques de data science pour traiter un problème concret, sensible et utile. D'autre part, il s'agit de mettre en pratique les compétences de développement full-stack en reliant un modèle Machine Learning à une interface utilisateur ergonomique. Le projet couvre ainsi plusieurs dimensions : exploration de données, prétraitement, modélisation, évaluation, déploiement d'une API et conception d'un frontend interactif.
+
+\section{Étude de l'existant}
+Les solutions classiques d'évaluation du risque médical reposent souvent sur des grilles, des questionnaires ou des indicateurs cliniques interprétés par des professionnels de santé. Ces méthodes sont essentielles mais peuvent être complétées par des approches analytiques capables de traiter simultanément plusieurs facteurs. Les systèmes d'aide à la décision basés sur les données permettent d'obtenir une estimation automatisée, reproductible et rapide.
+
+Dans le contexte de ce projet, l'existant technique se limite principalement à un dataset structuré, des bibliothèques de Machine Learning et des frameworks web. Il était donc nécessaire de construire l'ensemble de la chaîne applicative : exploration, prétraitement, apprentissage, évaluation, API et interface utilisateur.
+
+\section{Problématique}
+L'étude de l'existant a permis d'identifier plusieurs limites importantes :
+\begin{itemize}[label=--]
+  \item les données médicales contiennent souvent des valeurs manquantes ;
+  \item les classes sont fortement déséquilibrées dans les problèmes de détection de risque ;
+  \item la précision globale peut être trompeuse lorsque la classe positive est rare ;
+  \item un modèle entraîné doit être rendu accessible à un utilisateur non technique ;
+  \item l'explication du résultat doit être claire et prudente.
+\end{itemize}
+
+La problématique principale du projet peut être formulée ainsi :
+
+\begin{quote}
+Comment concevoir une application web capable d'estimer le risque d'AVC à partir de données patient, tout en intégrant un modèle Machine Learning évalué avec des métriques adaptées à un contexte médical déséquilibré ?
+\end{quote}
+
+\section{Objectifs du projet}
+
+\subsection{Objectifs fonctionnels}
+\begin{enumerate}
+  \item Permettre à l'utilisateur de renseigner les informations d'un patient.
+  \item Envoyer les données saisies vers une API de prédiction.
+  \item Retourner la probabilité de risque d'AVC.
+  \item Afficher une interprétation du risque : faible, modéré ou élevé.
+  \item Consulter les métriques du modèle final.
+  \item Comparer les résultats de plusieurs modèles PCA.
+  \item Vérifier l'état du backend et du modèle chargé.
+\end{enumerate}
+
+\subsection{Objectifs techniques}
+\begin{itemize}[label=--]
+  \item construire un pipeline de prétraitement robuste ;
+  \item traiter les valeurs manquantes et encoder les variables catégorielles ;
+  \item standardiser les variables numériques ;
+  \item appliquer une réduction de dimension par PCA ;
+  \item utiliser SMOTE pendant l'entraînement pour le rééquilibrage ;
+  \item comparer plusieurs algorithmes de classification ;
+  \item sauvegarder les modèles avec Joblib ;
+  \item exposer les prédictions à travers FastAPI ;
+  \item développer une interface React connectée au backend.
+\end{itemize}
+
+\subsection{Contraintes}
+\begin{itemize}[label=--]
+  \item la solution doit être exécutable localement ;
+  \item le code doit rester lisible et modulaire ;
+  \item l'API doit retourner des réponses JSON simples ;
+  \item les métriques doivent être sauvegardées et réutilisables ;
+  \item l'interface doit rester claire et rapide à utiliser ;
+  \item le résultat doit être présenté comme une aide à la décision, non comme un diagnostic.
+\end{itemize}
+
+\section{Organisation du rapport}
+Ce rapport est organisé en quatre chapitres. Le premier présente le contexte, la problématique et les objectifs du projet. Le deuxième chapitre décrit l'analyse des besoins, la spécification des données et la conception UML et architecturale. Le troisième chapitre détaille la réalisation technique, le pipeline Machine Learning, le backend et le frontend ainsi que les interfaces principales. Le quatrième chapitre présente les tests, les résultats obtenus, les difficultés rencontrées et la conclusion.
+
+% ============================================================
+\chapter{Analyse, Spécification et Conception}
+% ============================================================
+
+\section{Acteurs du système}
+Le principal acteur est l'utilisateur de l'application. Il peut s'agir d'un étudiant, d'un encadrant, d'un évaluateur ou d'un utilisateur souhaitant tester la prédiction à partir d'un exemple de patient. Le système regroupe le frontend React, le backend FastAPI et le modèle Machine Learning.
+
+\section{Besoins fonctionnels}
+\begin{longtable}{p{3cm}p{10cm}}
+\caption{Besoins fonctionnels du système}\\
+\toprule
+\textbf{Code} & \textbf{Description}\\
+\midrule
+BF1 & L'utilisateur peut accéder à une page d'accueil présentant le projet et l'état du service.\\
+BF2 & L'utilisateur peut saisir les caractéristiques d'un patient dans un formulaire.\\
+BF3 & Le système valide la structure des données attendues par le backend.\\
+BF4 & Le système appelle le modèle final pour générer une prédiction.\\
+BF5 & Le système retourne une probabilité de risque et un label interprétable.\\
+BF6 & L'utilisateur peut consulter les métriques du modèle final.\\
+BF7 & L'utilisateur peut comparer les prédictions de plusieurs modèles PCA.\\
+BF8 & Le système expose des options de formulaire pour éviter les valeurs incohérentes.\\
+\bottomrule
+\end{longtable}
+
+\section{Besoins non fonctionnels}
+\begin{longtable}{p{3cm}p{10cm}}
+\caption{Besoins non fonctionnels du système}\\
+\toprule
+\textbf{Code} & \textbf{Description}\\
+\midrule
+BNF1 & L'application doit être simple à installer et à lancer localement.\\
+BNF2 & L'API doit répondre avec des structures JSON stables.\\
+BNF3 & Le code doit être organisé en modules réutilisables.\\
+BNF4 & Le modèle doit être chargé au démarrage pour réduire le temps du premier appel.\\
+BNF5 & L'interface doit être responsive et lisible.\\
+BNF6 & Les erreurs doivent être traitées côté backend et côté frontend.\\
+BNF7 & Les résultats doivent être interprétés avec prudence dans un contexte médical.\\
+\bottomrule
+\end{longtable}
+
+\section{Données manipulées}
+Le formulaire patient comprend dix variables explicatives : genre, âge, hypertension, maladie cardiaque, situation matrimoniale, type de travail, type de résidence, niveau moyen de glucose, indice de masse corporelle et statut tabagique. La cible utilisée pendant l'entraînement est la variable \texttt{stroke}, qui indique l'existence ou non d'un AVC.
+
+\begin{table}[H]
+\centering
+\caption{Variables principales du dataset}
+\begin{tabularx}{\textwidth}{p{4cm}p{3cm}X}
+\toprule
+\textbf{Variable} & \textbf{Type} & \textbf{Rôle}\\
+\midrule
+\texttt{age} & Numérique & Âge du patient.\\
+\texttt{hypertension} & Binaire & Présence ou absence d'hypertension.\\
+\texttt{heart\_disease} & Binaire & Présence ou absence de maladie cardiaque.\\
+\texttt{avg\_glucose\_level} & Numérique & Niveau moyen de glucose.\\
+\texttt{bmi} & Numérique & Indice de masse corporelle.\\
+\texttt{gender}, \texttt{work\_type}, etc. & Catégoriel & Variables contextuelles encodées avant apprentissage.\\
+\texttt{stroke} & Binaire & Variable cible à prédire.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Étude exploratoire des données}
+
+\subsection{Vue d'ensemble du dataset}
+Le dataset contient 5110 lignes et 12 colonnes. La colonne \texttt{bmi} contient 201 valeurs manquantes, tandis qu'aucun doublon n'a été identifié. La variable cible est fortement déséquilibrée : la classe \texttt{0} représente 4861 observations, soit 95,13\%, et la classe \texttt{1} représente 249 observations, soit 4,87\%.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{stroke_distribution.png}
+\caption{Distribution de la variable cible \texttt{stroke}}
+\end{figure}
+
+\subsection{Analyse des variables numériques}
+Les variables numériques les plus corrélées avec la cible sont l'âge, les maladies cardiaques et le niveau moyen de glucose. Même si ces corrélations restent modérées, elles fournissent des indications utiles pour la compréhension du problème.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.78\textwidth]{numeric_correlation_heatmap.png}
+\caption{Carte de corrélation des variables numériques}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.32\textwidth}
+\includegraphics[width=\textwidth]{age_histogram.png}
+\caption{Âge}
+\end{subfigure}
+\begin{subfigure}{0.32\textwidth}
+\includegraphics[width=\textwidth]{avg_glucose_level_histogram.png}
+\caption{Glucose}
+\end{subfigure}
+\begin{subfigure}{0.32\textwidth}
+\includegraphics[width=\textwidth]{bmi_histogram.png}
+\caption{BMI}
+\end{subfigure}
+\caption{Distribution des variables numériques principales}
+\end{figure}
+
+\subsection{Analyse des variables catégorielles}
+L'analyse par groupes montre que le taux d'AVC varie selon certains facteurs. Par exemple, le taux observé est plus élevé chez les patients présentant une hypertension ou une maladie cardiaque.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\includegraphics[width=\textwidth]{stroke_by_hypertension.png}
+\caption{Hypertension}
+\end{subfigure}
+\begin{subfigure}{0.48\textwidth}
+\includegraphics[width=\textwidth]{stroke_by_heart_disease.png}
+\caption{Maladie cardiaque}
+\end{subfigure}
+\caption{Taux d'AVC par facteurs médicaux}
+\end{figure}
+
+\subsection{Points d'attention}
+L'étude exploratoire a permis d'identifier trois points clés :
+\begin{itemize}[label=--]
+  \item la nécessité d'imputer les valeurs manquantes de \texttt{bmi} ;
+  \item la nécessité d'utiliser des métriques adaptées au déséquilibre de classes ;
+  \item la nécessité de privilégier le rappel afin de réduire les faux négatifs.
+\end{itemize}
+
+\section{Architecture globale}
+L'architecture adoptée est une architecture web en deux parties principales. Le frontend React se charge de l'expérience utilisateur, tandis que le backend FastAPI expose les endpoints nécessaires au fonctionnement de l'application. Le modèle Machine Learning est chargé au démarrage du backend et utilisé pour générer les prédictions.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{architecture.png}
+\caption{Architecture globale de la solution}
+\end{figure}
+
+\section{Diagramme de cas d'utilisation}
+Le diagramme de cas d'utilisation présente les principales interactions entre l'utilisateur et le système.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{usecase.png}
+\caption{Diagramme de cas d'utilisation}
+\end{figure}
+
+\section{Diagramme de classes}
+Le diagramme de classes simplifié montre les entités importantes de l'application : le modèle de données \texttt{PatientInput}, le service FastAPI, la réponse de prédiction, le pipeline Machine Learning et les composants React.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/classe pfa.jpg}
+\caption{Diagramme de classes simplifié}
+\end{figure}
+
+\section{Diagramme de séquence}
+Le diagramme de séquence illustre le déroulement d'une prédiction, depuis la saisie du formulaire jusqu'à l'affichage du résultat.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/seq1.jpg}
+\caption{Diagramme de séquence de la prédiction}
+\end{figure}
+
+% ============================================================
+\chapter{Réalisation Technique et Interfaces}
+% ============================================================
+
+\section{Structure du projet}
+Le projet est organisé en deux modules principaux : \texttt{backend-ml} et \texttt{frontend}. Le backend contient les données, les scripts de Machine Learning, les modèles sauvegardés et l'API FastAPI. Le frontend contient l'application React, les composants, les pages et le module d'appel API.
+
+\begin{lstlisting}[language=bash,caption={Structure simplifiée du projet}]
+pfa-stroke-prediction/
+|-- backend-ml/
+|   |-- data/
+|   |-- models/
+|   |-- reports/
+|   |-- src/
+|   |-- main.py
+|   `-- requirements.txt
+`-- frontend/
+    |-- public/
+    |-- src/
+    |-- package.json
+    `-- vite.config.js
+\end{lstlisting}
+
+\section{Technologies utilisées}
+
+\begin{longtable}{p{4cm}p{9cm}}
+\caption{Technologies utilisées dans le projet}\\
+\toprule
+\textbf{Technologie} & \textbf{Utilisation}\\
+\midrule
+Python & Langage principal du backend et des scripts Machine Learning.\\
+FastAPI & Création de l'API REST de prédiction.\\
+Pydantic & Validation des données reçues par l'API.\\
+Pandas & Chargement et manipulation du dataset.\\
+Scikit-learn & Prétraitement, PCA, modèles et métriques.\\
+imbalanced-learn & Implémentation de SMOTE.\\
+XGBoost & Modèle de boosting comparé aux autres algorithmes.\\
+Joblib & Sauvegarde et chargement des modèles entraînés.\\
+React & Construction de l'interface utilisateur.\\
+Vite & Environnement de développement frontend rapide.\\
+Axios & Communication HTTP entre React et FastAPI.\\
+React Router DOM & Navigation entre les pages de l'application.\\
+\bottomrule
+\end{longtable}
+
+FastAPI a été choisi pour sa simplicité, sa documentation automatique et sa compatibilité avec les modèles Python. React a été retenu pour créer une interface dynamique et modulaire. Scikit-learn et imbalanced-learn offrent une base solide pour construire des pipelines reproductibles, tandis que Joblib facilite la sérialisation des modèles entraînés.
+
+\section{Pipeline Machine Learning}
+
+\subsection{Prétraitement des données}
+Le prétraitement est une étape essentielle. Les variables numériques sont imputées par la médiane puis standardisées. Les variables catégorielles sont imputées par la modalité la plus fréquente puis encodées en one-hot encoding. Ces opérations sont regroupées dans un \texttt{ColumnTransformer} afin de garantir une transformation cohérente entre l'entraînement et l'inférence.
+
+\begin{lstlisting}[language=Python,caption={Principe du pipeline de prétraitement}]
+numeric_pipeline = Pipeline([
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scaler", StandardScaler()),
+])
+
+categorical_pipeline = Pipeline([
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("encoder", OneHotEncoder(handle_unknown="ignore")),
+])
+\end{lstlisting}
+
+\subsection{Réduction de dimension par PCA}
+Après encodage, le nombre de variables passe à 21. La PCA permet de réduire cet espace à 11 composantes tout en conservant 95,45\% de la variance. Cette réduction simplifie le modèle, diminue la redondance et peut améliorer la stabilité de l'apprentissage.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+\includegraphics[width=\textwidth]{pca_explained_variance.png}
+\caption{Variance expliquée}
+\end{subfigure}
+\begin{subfigure}{0.48\textwidth}
+\includegraphics[width=\textwidth]{pca_cumulative_variance.png}
+\caption{Variance cumulée}
+\end{subfigure}
+\caption{Analyse PCA}
+\end{figure}
+
+\subsection{Gestion du déséquilibre par SMOTE}
+La variable cible étant fortement déséquilibrée, l'entraînement direct peut favoriser la classe majoritaire et ignorer les cas positifs. SMOTE est utilisé dans le pipeline d'entraînement afin de générer des exemples synthétiques de la classe minoritaire. Cette opération est appliquée uniquement sur les données d'entraînement, afin d'éviter toute fuite d'information vers le jeu de test.
+
+\subsection{Modèles entraînés}
+Trois familles de modèles ont été comparées :
+\begin{itemize}[label=--]
+  \item \textbf{Logistic Regression} : modèle linéaire simple, robuste et interprétable ;
+  \item \textbf{Random Forest} : modèle ensembliste basé sur plusieurs arbres de décision ;
+  \item \textbf{XGBoost} : algorithme de gradient boosting performant pour les données tabulaires.
+\end{itemize}
+
+Chaque modèle a été entraîné avec et sans PCA afin d'évaluer l'apport de la réduction de dimension.
+
+\section{Backend FastAPI}
+Le backend est développé avec FastAPI. Il charge le modèle final au démarrage, expose des routes de consultation et fournit une route de prédiction. La structure attendue pour la requête est définie avec Pydantic, ce qui assure une validation automatique des types.
+
+\begin{lstlisting}[language=Python,caption={Structure simplifiée d'une entrée patient}]
+class PatientInput(BaseModel):
+    gender: str
+    age: float
+    hypertension: int
+    heart_disease: int
+    ever_married: str
+    work_type: str
+    Residence_type: str
+    avg_glucose_level: float
+    bmi: float
+    smoking_status: str
+\end{lstlisting}
+
+\begin{table}[H]
+\centering
+\caption{Routes principales de l'API}
+\begin{tabularx}{\textwidth}{p{3.2cm}p{4cm}X}
+\toprule
+\textbf{Méthode} & \textbf{Route} & \textbf{Rôle}\\
+\midrule
+GET & \texttt{/} & Vérifier que l'API est disponible.\\
+GET & \texttt{/health} & Contrôler l'état du service et du modèle.\\
+GET & \texttt{/model-info} & Obtenir les informations du modèle déployé.\\
+GET & \texttt{/metrics} & Charger les métriques du modèle final.\\
+GET & \texttt{/form-options} & Fournir les valeurs possibles du formulaire.\\
+POST & \texttt{/predict} & Prédire le risque avec le modèle final.\\
+POST & \texttt{/predict-all} & Comparer les prédictions de plusieurs modèles PCA.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Frontend React}
+Le frontend est développé avec React et Vite. Il contient une page d'accueil, une page d'information sur le modèle, un formulaire patient, une carte de résultat et un composant de comparaison multi-modèles. Les appels vers le backend sont centralisés dans un module Axios.
+
+\begin{lstlisting}[caption={Exemple d'appel API côté frontend}]
+export function predictStroke(patientData) {
+  return api.post('/predict', patientData)
+}
+\end{lstlisting}
+
+L'interprétation du résultat se base sur des seuils simples définis côté backend :
+\begin{itemize}[label=--]
+  \item probabilité inférieure à 40\% : risque faible ;
+  \item probabilité entre 40\% et 70\% : risque modéré ;
+  \item probabilité supérieure ou égale à 70\% : risque élevé.
+\end{itemize}
+
+\section{Interfaces principales de l'application}
+
+\subsection{Page d'accueil}
+La page d'accueil présente le projet, l'état de l'API, le nom du modèle chargé et les principales métriques. Elle sert de point d'entrée vers le formulaire de prédiction et affiche en temps réel le statut de connexion au backend.
+
+\begin{figure}[H]
+\centering
+% TODO: remplacer par une capture d'écran réelle de la page d'accueil
+\fbox{\rule{0pt}{6cm}\hspace{12cm}}
+\caption{Interface -- Page d'accueil de l'application}
+\label{fig:interface_home}
+\end{figure}
+
+\subsection{Formulaire de saisie patient}
+Le formulaire permet de saisir les variables attendues par le backend : informations démographiques, facteurs médicaux et habitudes de vie. Les champs catégoriels sont contrôlés à partir des options retournées dynamiquement par l'API via la route \texttt{/form-options}.
+
+\begin{figure}[H]
+\centering
+% TODO: remplacer par une capture d'écran réelle du formulaire patient
+\fbox{\rule{0pt}{7cm}\hspace{12cm}}
+\caption{Interface -- Formulaire de saisie des données patient}
+\label{fig:interface_form}
+\end{figure}
+
+\subsection{Carte de résultat de prédiction}
+Après soumission du formulaire, l'application affiche le label de risque, le pourcentage estimé et l'interprétation textuelle. Un code couleur (vert, orange, rouge) permet à l'utilisateur de comprendre immédiatement le niveau de risque retourné par le modèle.
+
+\begin{figure}[H]
+\centering
+% TODO: remplacer par une capture d'écran réelle de la carte de résultat
+\fbox{\rule{0pt}{5cm}\hspace{12cm}}
+\caption{Interface -- Affichage du résultat de prédiction}
+\label{fig:interface_result}
+\end{figure}
+
+\subsection{Page d'information sur le modèle}
+La page modèle résume le dataset, le preprocessing, la PCA, la comparaison des modèles et le choix final. Elle permet de justifier la solution retenue et de rendre les résultats plus transparents pour l'utilisateur.
+
+\begin{figure}[H]
+\centering
+% TODO: remplacer par une capture d'écran réelle de la page About Model
+\fbox{\rule{0pt}{6cm}\hspace{12cm}}
+\caption{Interface -- Page d'information sur le modèle}
+\label{fig:interface_model}
+\end{figure}
+
+\subsection{Comparaison multi-modèles}
+Une section dédiée permet à l'utilisateur de soumettre les données d'un patient à l'ensemble des modèles PCA entraînés et de comparer leurs prédictions côte à côte. Cela offre une transparence supplémentaire sur la variabilité des résultats selon l'algorithme utilisé.
+
+\begin{figure}[H]
+\centering
+% TODO: remplacer par une capture d'écran réelle de la comparaison multi-modèles
+\fbox{\rule{0pt}{6cm}\hspace{12cm}}
+\caption{Interface -- Comparaison des prédictions multi-modèles}
+\label{fig:interface_compare}
+\end{figure}
+
+% ============================================================
+\chapter{Tests, Résultats et Conclusion}
+% ============================================================
+
+\section{Stratégie de validation}
+La validation du projet s'est déroulée à plusieurs niveaux : validation du pipeline de données, validation des modèles, validation des routes API et validation de l'interface frontend. L'objectif était de s'assurer que chaque composant fonctionne indépendamment, puis que l'intégration globale produit le comportement attendu.
+
+\section{Métriques utilisées}
+Les métriques principales sont l'accuracy, la précision, le rappel, le F1-score et le ROC-AUC. Dans ce projet, le rappel est particulièrement important, car il mesure la capacité à détecter les cas positifs. Un faux négatif signifie qu'un patient à risque pourrait être classé comme non risqué, ce qui est critique dans le contexte étudié.
+
+\section{Résultats sans PCA}
+\begin{table}[H]
+\centering
+\caption{Comparaison des modèles sans PCA}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Modèle} & \textbf{Accuracy} & \textbf{Précision} & \textbf{Rappel} & \textbf{F1} & \textbf{ROC-AUC}\\
+\midrule
+Logistic Regression & 0.7515 & 0.1408 & 0.8000 & 0.2395 & 0.8450\\
+Random Forest & 0.9188 & 0.0976 & 0.0800 & 0.0879 & 0.7497\\
+XGBoost & 0.9227 & 0.2157 & 0.2200 & 0.2178 & 0.7891\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Résultats avec PCA}
+\begin{table}[H]
+\centering
+\caption{Comparaison des modèles avec PCA}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Modèle} & \textbf{Accuracy} & \textbf{Précision} & \textbf{Rappel} & \textbf{F1} & \textbf{ROC-AUC}\\
+\midrule
+Logistic Regression & 0.7622 & 0.1465 & 0.8000 & 0.2477 & 0.8421\\
+Random Forest & 0.8885 & 0.1279 & 0.2200 & 0.1618 & 0.7813\\
+XGBoost & 0.8601 & 0.1026 & 0.2400 & 0.1437 & 0.7631\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Choix du modèle final}
+Le modèle final retenu est \textbf{Logistic Regression avec PCA}. Ce choix s'explique par plusieurs raisons :
+\begin{itemize}[label=--]
+  \item il conserve un rappel élevé de 0,80 ;
+  \item il obtient un ROC-AUC de 0,8421 ;
+  \item il présente le meilleur F1-score parmi les modèles avec PCA ;
+  \item il réduit la dimension de 21 features à 11 composantes ;
+  \item il minimise les faux négatifs par rapport aux autres modèles testés.
+\end{itemize}
+
+\section{Tests API}
+Les routes \texttt{/health}, \texttt{/model-info}, \texttt{/metrics}, \texttt{/form-options}, \texttt{/predict} et \texttt{/predict-all} ont été testées. Les réponses attendues sont au format JSON. La route \texttt{/predict} vérifie que le modèle est chargé, transforme l'entrée en DataFrame, puis appelle les méthodes \texttt{predict} et \texttt{predict\_proba}.
+
+\section{Tests frontend}
+Les tests frontend se concentrent sur le chargement des données, l'affichage de l'état API, la soumission du formulaire et l'affichage des résultats. Les erreurs backend sont également récupérées afin de prévenir l'utilisateur en cas de problème de communication ou de prédiction.
+
+\section{Difficultés rencontrées}
+
+\subsection{Déséquilibre de classes}
+La difficulté principale est le déséquilibre de la variable cible. Une accuracy élevée peut masquer un modèle incapable de détecter correctement la classe positive. Le projet a donc nécessité une lecture attentive des métriques, en particulier le rappel et la matrice de confusion.
+
+\subsection{Choix du modèle}
+Le choix du modèle final n'était pas évident, car certains modèles obtenaient une accuracy plus élevée tout en détectant très peu de cas positifs. Le compromis retenu privilégie la détection des patients à risque sur la précision globale.
+
+\subsection{Intégration backend--frontend}
+L'intégration entre FastAPI et React a nécessité une cohérence stricte entre les champs attendus par l'API et les données envoyées par le formulaire. Les noms des variables, les types et les valeurs catégorielles doivent être identiques pour éviter les erreurs de validation Pydantic.
+
+\subsection{Interprétation dans un contexte médical}
+Le résultat de prédiction doit être formulé avec prudence. L'application est un outil d'aide à la décision et ne remplace pas l'avis d'un professionnel de santé. Cette limite est clairement mentionnée dans l'interface et doit être rappelée dans toute utilisation réelle.
+
+\section{Conclusion générale}
+Ce projet de fin d'année à \institution{} a permis de concevoir et réaliser une application web complète de prédiction du risque d'AVC. La solution couvre l'ensemble du cycle de développement : étude exploratoire, préparation des données, entraînement de modèles, comparaison des performances, choix du modèle final, développement d'une API FastAPI et intégration avec une interface React.
+
+Les résultats montrent que la régression logistique avec PCA constitue un choix pertinent pour ce projet, car elle maintient un rappel élevé tout en simplifiant l'espace des variables. Le backend expose une API claire et le frontend permet une utilisation simple du modèle par un formulaire interactif. Le projet constitue ainsi une preuve de concept solide d'intégration du Machine Learning dans une application web, en respectant les contraintes pédagogiques et techniques définies au départ.
+
+\section{Apports du projet}
+Le projet a permis de renforcer plusieurs compétences :
+\begin{itemize}[label=--]
+  \item analyse exploratoire de données ;
+  \item conception de pipelines Machine Learning ;
+  \item évaluation de modèles sur données déséquilibrées ;
+  \item développement d'API REST avec FastAPI ;
+  \item intégration frontend avec React ;
+  \item documentation technique et rédaction académique.
+\end{itemize}
+
+\section{Perspectives}
+Plusieurs améliorations peuvent être envisagées pour des travaux futurs :
+\begin{itemize}[label=--]
+  \item ajouter une analyse d'explicabilité avec SHAP ou LIME ;
+  \item calibrer les probabilités du modèle pour améliorer la fiabilité ;
+  \item intégrer une authentification pour sécuriser l'accès à l'application ;
+  \item ajouter une base de données pour historiser les prédictions ;
+  \item déployer l'application sur un serveur cloud ;
+  \item améliorer l'interface avec des visualisations plus détaillées ;
+  \item tester la solution sur d'autres jeux de données médicaux ;
+  \item effectuer une validation clinique avant tout usage réel.
+\end{itemize}
+
+% ============================
+\begin{thebibliography}{99}
+\addcontentsline{toc}{chapter}{Bibliographie}
+
+\bibitem{wso2025}
+Feigin, V. L. et al. \textit{World Stroke Organization: Global Stroke Fact Sheet 2025}. International Journal of Stroke, 2025.
+
+\bibitem{fastapi}
+FastAPI. \textit{FastAPI Documentation}. Disponible sur : \url{https://fastapi.tiangolo.com/}.
+
+\bibitem{sklearn}
+Scikit-learn. \textit{Machine Learning in Python}. Disponible sur : \url{https://scikit-learn.org/}.
+
+\bibitem{pca}
+Scikit-learn. \textit{PCA -- Principal Component Analysis Documentation}. Disponible sur : \url{https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html}.
+
+\bibitem{smote}
+Chawla, N. V., Bowyer, K. W., Hall, L. O., Kegelmeyer, W. P. \textit{SMOTE: Synthetic Minority Over-sampling Technique}. Journal of Artificial Intelligence Research, 2002.
+
+\bibitem{react}
+React. \textit{React Documentation}. Disponible sur : \url{https://react.dev/}.
+
+\bibitem{xgboost}
+Chen, T., Guestrin, C. \textit{XGBoost: A Scalable Tree Boosting System}. Proceedings of the 22nd ACM SIGKDD, 2016.
+
+\end{thebibliography}
+
+% ============================
+\appendix
+\chapter{Annexes}
+% ============================
+
+\section{Commandes de lancement}
+\begin{lstlisting}[language=bash,caption={Lancement du backend}]
+cd backend-ml
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+\end{lstlisting}
+
+\begin{lstlisting}[language=bash,caption={Lancement du frontend}]
+cd frontend
+npm install
+npm run dev
+\end{lstlisting}
+
+\section{Exemple de requête de prédiction}
+\begin{lstlisting}[caption={Exemple JSON envoyé à l'API}]
+{
+  "gender": "Male",
+  "age": 67.0,
+  "hypertension": 1,
+  "heart_disease": 1,
+  "ever_married": "Yes",
+  "work_type": "Private",
+  "Residence_type": "Urban",
+  "avg_glucose_level": 228.69,
+  "bmi": 36.6,
+  "smoking_status": "formerly smoked"
+}
+\end{lstlisting}
+
+\section{Exemple de réponse}
+\begin{lstlisting}[caption={Exemple de réponse de prédiction}]
+{
+  "prediction": 1,
+  "label": "Risque eleve d'AVC",
+  "risk_probability": 0.73,
+  "risk_percentage": 73.0,
+  "interpretation": "Risque eleve",
+  "model_used": "logistic_regression_pca"
+}
+\end{lstlisting}
+
+\section{Remarque finale}
+Toute exploitation réelle d'une application de prédiction médicale doit faire l'objet d'une validation clinique, d'un contrôle de qualité des données, d'une analyse des biais et d'une validation réglementaire appropriée. Le présent projet reste une preuve de concept pédagogique réalisée dans le cadre académique de \institution.
+
+\end{document}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-
+import { motion } from 'framer-motion'
+import { User, Heart, Activity, TrendingUp, Loader2, UserPlus, BrainCircuit, Stethoscope } from 'lucide-react'
 import { getFormOptions, getSamplePatient, predictAllModels, predictStroke } from '../api/strokeApi'
 
 const initialFormData = {
@@ -22,6 +23,7 @@ function PatientForm({ onPrediction, onAllPredictions }) {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [currentSection, setCurrentSection] = useState(0)
 
   useEffect(() => {
     async function loadFormData() {
@@ -29,7 +31,6 @@ function PatientForm({ onPrediction, onAllPredictions }) {
       setError('')
 
       try {
-        // On charge tout ensemble pour que le formulaire soit pret plus vite.
         const [optionsResponse, sampleResponse] = await Promise.all([
           getFormOptions(),
           getSamplePatient(),
@@ -38,7 +39,7 @@ function PatientForm({ onPrediction, onAllPredictions }) {
         setFormOptions(optionsResponse.data)
         setSamplePatient(sampleResponse.data)
       } catch (loadError) {
-        setError(loadError.message || 'Erreur lors du chargement du formulaire.')
+        setError(loadError.message || 'Error loading form data')
       } finally {
         setLoading(false)
       }
@@ -58,7 +59,6 @@ function PatientForm({ onPrediction, onAllPredictions }) {
   function handleLoadSample() {
     if (!samplePatient) return
 
-    // L'exemple backend permet de tester vite le formulaire sans tout saisir a la main.
     setFormData({
       ...samplePatient,
       age: String(samplePatient.age),
@@ -75,11 +75,11 @@ function PatientForm({ onPrediction, onAllPredictions }) {
     const missingField = requiredFields.find(([, value]) => value === '')
 
     if (missingField) {
-      return 'Tous les champs du patient doivent etre renseignes.'
+      return 'All patient fields are required'
     }
 
     if (Number(formData.age) < 0 || Number(formData.avg_glucose_level) < 0 || Number(formData.bmi) < 0) {
-      return 'Les valeurs numeriques doivent etre positives.'
+      return 'Numeric values must be positive'
     }
 
     return ''
@@ -111,7 +111,6 @@ function PatientForm({ onPrediction, onAllPredictions }) {
     setError('')
 
     try {
-      // On garde la prediction finale et la comparaison des 3 modeles dans le meme envoi.
       const [response, allModelsResponse] = await Promise.all([
         predictStroke(patientData),
         predictAllModels(patientData),
@@ -121,159 +120,245 @@ function PatientForm({ onPrediction, onAllPredictions }) {
         request: patientData,
         response: response.data,
       })
-      onAllPredictions?.({
-        request: patientData,
-        response: allModelsResponse.data,
-      })
+      
+      if (onAllPredictions) {
+        onAllPredictions({
+          request: patientData,
+          response: allModelsResponse.data,
+        })
+      }
     } catch (submitError) {
       const message =
         submitError.response?.data?.detail ||
         submitError.message ||
-        'Erreur lors de la prediction.'
+        'Prediction error'
       setError(message)
       onPrediction({
         request: patientData,
         response: null,
         error: message,
       })
-      onAllPredictions?.({
-        request: patientData,
-        response: null,
-        error: message,
-      })
+      if (onAllPredictions) {
+        onAllPredictions({
+          request: patientData,
+          response: null,
+          error: message,
+        })
+      }
     } finally {
       setSubmitting(false)
     }
   }
 
+  const sections = [
+    {
+      title: 'Demographics',
+      icon: User,
+      fields: ['gender', 'age', 'ever_married', 'work_type', 'Residence_type'],
+      color: 'rgb(var(--primary))'
+    },
+    {
+      title: 'Medical History',
+      icon: Heart,
+      fields: ['hypertension', 'heart_disease'],
+      color: 'rgb(var(--secondary))'
+    },
+    {
+      title: 'Lifestyle',
+      icon: Activity,
+      fields: ['smoking_status'],
+      color: 'rgb(var(--accent))'
+    },
+    {
+      title: 'Clinical Metrics',
+      icon: TrendingUp,
+      fields: ['avg_glucose_level', 'bmi'],
+      color: 'rgb(var(--primary))'
+    }
+  ]
+
+  const fieldLabels = {
+    gender: 'Gender',
+    age: 'Age',
+    hypertension: 'Hypertension',
+    heart_disease: 'Heart Disease',
+    ever_married: 'Marital Status',
+    work_type: 'Work Type',
+    Residence_type: 'Residence Type',
+    avg_glucose_level: 'Average Glucose Level (mg/dL)',
+    bmi: 'BMI (kg/m²)',
+    smoking_status: 'Smoking Status',
+  }
+
   return (
-    <section className="card">
-      <h2>Patient Form</h2>
-      <p>Renseignez les informations du patient puis lancez la prediction.</p>
-
-      {loading ? <p>Chargement des options du formulaire...</p> : null}
-      {error ? <p className="error-text">{error}</p> : null}
-
-      <div className="button-row">
-        <button type="button" onClick={handleLoadSample} disabled={!samplePatient || loading}>
-          Charger exemple patient
-        </button>
+    <motion.div
+      id="patient-assessment"
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.2, duration: 0.5 }}
+      className="glass-card rounded-3xl p-8 relative overflow-hidden"
+    >
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-5 blur-3xl pointer-events-none"
+           style={{ background: 'radial-gradient(circle, rgb(var(--accent)), transparent)' }}>
       </div>
 
-      <form className="patient-form" onSubmit={handleSubmit}>
-        <label>
-          Gender
-          <select name="gender" value={formData.gender} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.gender?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Age
-          <input name="age" type="number" min="0" step="0.1" value={formData.age} onChange={handleChange} />
-        </label>
-
-        <label>
-          Hypertension
-          <select name="hypertension" value={formData.hypertension} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.hypertension?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Heart disease
-          <select name="heart_disease" value={formData.heart_disease} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.heart_disease?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Ever married
-          <select name="ever_married" value={formData.ever_married} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.ever_married?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Work type
-          <select name="work_type" value={formData.work_type} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.work_type?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Residence type
-          <select name="Residence_type" value={formData.Residence_type} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.Residence_type?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Avg glucose level
-          <input
-            name="avg_glucose_level"
-            type="number"
-            min="0"
-            step="0.01"
-            value={formData.avg_glucose_level}
-            onChange={handleChange}
-          />
-        </label>
-
-        <label>
-          BMI
-          <input name="bmi" type="number" min="0" step="0.1" value={formData.bmi} onChange={handleChange} />
-        </label>
-
-        <label>
-          Smoking status
-          <select name="smoking_status" value={formData.smoking_status} onChange={handleChange}>
-            <option value="">Selectionner</option>
-            {formOptions?.smoking_status?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="button-row">
-          <button type="submit" disabled={submitting || loading}>
-            {submitting ? 'Prediction en cours...' : 'Predire le risque'}
+      <div className="relative">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 md:mb-8 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shadow-lg shrink-0"
+                 style={{ background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--secondary)))' }}>
+              <Stethoscope className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-lg md:text-2xl font-bold text-[rgb(var(--card-foreground))] leading-tight">Patient Assessment</h3>
+              <p className="text-xs md:text-sm text-[rgb(var(--muted-foreground))] leading-tight mt-0.5">Enter clinical information for risk analysis</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleLoadSample}
+            disabled={!samplePatient || loading}
+            className="flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 shadow-md hover:shadow-lg whitespace-nowrap"
+            style={{ 
+              background: 'rgba(var(--accent), 0.1)',
+              color: 'rgb(var(--accent))'
+            }}
+          >
+            <UserPlus className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Load Sample Patient</span>
+            <span className="sm:hidden">Sample</span>
           </button>
         </div>
-      </form>
-    </section>
+
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm font-medium"
+          >
+            {error}
+          </motion.div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
+          {/* Section navigation */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin -mx-2 px-2">
+            {sections.map((section, index) => {
+              const Icon = section.icon
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setCurrentSection(index)}
+                  className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all shadow-md ${
+                    currentSection === index
+                      ? 'text-white shadow-lg scale-105'
+                      : 'bg-[rgb(var(--muted))] text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--border))]'
+                  }`}
+                  style={currentSection === index ? {
+                    background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--secondary)))'
+                  } : {}}
+                >
+                  <Icon className="w-3 h-3 md:w-4 md:h-4" />
+                  <span className="hidden sm:inline">{section.title}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Form fields with animation */}
+          <motion.div
+            key={currentSection}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          >
+            {sections[currentSection].fields.map((fieldName) => {
+              const isSelect = ['gender', 'hypertension', 'heart_disease', 'ever_married', 'work_type', 'Residence_type', 'smoking_status'].includes(fieldName)
+              const isNumber = ['age', 'avg_glucose_level', 'bmi'].includes(fieldName)
+
+              return (
+                <div key={fieldName} className="space-y-2">
+                  <label className="block text-sm font-semibold text-[rgb(var(--card-foreground))]">
+                    {fieldLabels[fieldName]}
+                  </label>
+                  {isSelect ? (
+                    <select
+                      name={fieldName}
+                      value={formData[fieldName]}
+                      onChange={handleChange}
+                      className="input-field"
+                      disabled={loading || submitting}
+                    >
+                      <option value="">Select...</option>
+                      {formOptions?.[fieldName]?.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      name={fieldName}
+                      type={isNumber ? 'number' : 'text'}
+                      min={isNumber ? '0' : undefined}
+                      step={fieldName === 'avg_glucose_level' ? '0.01' : '0.1'}
+                      value={formData[fieldName]}
+                      onChange={handleChange}
+                      className="input-field"
+                      disabled={loading || submitting}
+                      placeholder={isNumber ? 'Enter value...' : 'Enter text...'}
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </motion.div>
+
+          {/* Progress indicator */}
+          <div className="flex gap-2 justify-center">
+            {sections.map((_, index) => (
+              <div
+                key={index}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  index === currentSection ? 'w-8' : 'w-1.5'
+                }`}
+                style={{
+                  background: index === currentSection 
+                    ? 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--accent)))'
+                    : 'rgb(var(--border))'
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Submit button */}
+          <div className="flex gap-4 pt-4">
+            <button
+              type="submit"
+              disabled={submitting || loading}
+              className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed py-3 md:py-4 text-base md:text-lg"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
+                  <span className="hidden sm:inline">Analyzing Patient Data...</span>
+                  <span className="sm:hidden">Analyzing...</span>
+                </>
+              ) : (
+                <>
+                  <BrainCircuit className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">Predict Stroke Risk</span>
+                  <span className="sm:hidden">Predict Risk</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </motion.div>
   )
 }
 
