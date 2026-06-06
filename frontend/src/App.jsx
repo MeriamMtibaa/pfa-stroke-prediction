@@ -8,7 +8,7 @@ import AboutModel from './pages/AboutModel'
 function App() {
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="min-h-screen flex flex-col" style={{ background: 'rgb(var(--background))' }}>
         <Navbar />
         <div className="flex-1">
           <Routes>

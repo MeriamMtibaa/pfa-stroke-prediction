@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { User, Heart, Activity, TrendingUp, Loader2, FileUser } from 'lucide-react'
+import { User, Heart, Activity, TrendingUp, Loader2, UserPlus, BrainCircuit, Stethoscope } from 'lucide-react'
 import { getFormOptions, getSamplePatient, predictAllModels, predictStroke } from '../api/strokeApi'
 
 const initialFormData = {
@@ -87,8 +87,6 @@ function PatientForm({ onPrediction, onAllPredictions }) {
 
   async function handleSubmit(event) {
     event.preventDefault()
-    
-    console.log('Form submission started')
 
     const validationError = validateForm()
     if (validationError) {
@@ -109,20 +107,14 @@ function PatientForm({ onPrediction, onAllPredictions }) {
       smoking_status: formData.smoking_status,
     }
 
-    console.log('Patient data:', patientData)
-
     setSubmitting(true)
     setError('')
 
     try {
-      console.log('Calling prediction APIs...')
       const [response, allModelsResponse] = await Promise.all([
         predictStroke(patientData),
         predictAllModels(patientData),
       ])
-
-      console.log('Prediction response:', response.data)
-      console.log('All models response:', allModelsResponse.data)
 
       onPrediction({
         request: patientData,
@@ -135,10 +127,7 @@ function PatientForm({ onPrediction, onAllPredictions }) {
           response: allModelsResponse.data,
         })
       }
-      
-      console.log('Prediction completed successfully')
     } catch (submitError) {
-      console.error('Prediction error:', submitError)
       const message =
         submitError.response?.data?.detail ||
         submitError.message ||
@@ -158,7 +147,6 @@ function PatientForm({ onPrediction, onAllPredictions }) {
       }
     } finally {
       setSubmitting(false)
-      console.log('Form submission ended')
     }
   }
 
@@ -166,22 +154,26 @@ function PatientForm({ onPrediction, onAllPredictions }) {
     {
       title: 'Demographics',
       icon: User,
-      fields: ['gender', 'age', 'ever_married', 'work_type', 'Residence_type']
+      fields: ['gender', 'age', 'ever_married', 'work_type', 'Residence_type'],
+      color: 'rgb(var(--primary))'
     },
     {
       title: 'Medical History',
       icon: Heart,
-      fields: ['hypertension', 'heart_disease']
+      fields: ['hypertension', 'heart_disease'],
+      color: 'rgb(var(--secondary))'
     },
     {
       title: 'Lifestyle',
       icon: Activity,
-      fields: ['smoking_status']
+      fields: ['smoking_status'],
+      color: 'rgb(var(--accent))'
     },
     {
       title: 'Clinical Metrics',
       icon: TrendingUp,
-      fields: ['avg_glucose_level', 'bmi']
+      fields: ['avg_glucose_level', 'bmi'],
+      color: 'rgb(var(--primary))'
     }
   ]
 
@@ -200,120 +192,172 @@ function PatientForm({ onPrediction, onAllPredictions }) {
 
   return (
     <motion.div
+      id="patient-assessment"
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.2, duration: 0.5 }}
-      className="glass-card rounded-3xl p-8"
+      className="glass-card rounded-3xl p-8 relative overflow-hidden"
     >
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-2xl font-bold text-slate-900">Patient Assessment</h3>
-          <p className="text-slate-500 mt-1">Enter patient information for risk analysis</p>
-        </div>
-        <button
-          type="button"
-          onClick={handleLoadSample}
-          disabled={!samplePatient || loading}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-sky-600 bg-sky-50 rounded-lg hover:bg-sky-100 transition-colors disabled:opacity-50"
-        >
-          <FileUser className="w-4 h-4" />
-          Load Sample
-        </button>
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-5 blur-3xl pointer-events-none"
+           style={{ background: 'radial-gradient(circle, rgb(var(--accent)), transparent)' }}>
       </div>
 
-      {error && (
-        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Section navigation */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {sections.map((section, index) => {
-            const Icon = section.icon
-            return (
-              <button
-                key={index}
-                type="button"
-                onClick={() => setCurrentSection(index)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
-                  currentSection === index
-                    ? 'bg-slate-900 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {section.title}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Form fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {sections[currentSection].fields.map((fieldName) => {
-            const isSelect = ['gender', 'hypertension', 'heart_disease', 'ever_married', 'work_type', 'Residence_type', 'smoking_status'].includes(fieldName)
-            const isNumber = ['age', 'avg_glucose_level', 'bmi'].includes(fieldName)
-
-            return (
-              <div key={fieldName} className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700">
-                  {fieldLabels[fieldName]}
-                </label>
-                {isSelect ? (
-                  <select
-                    name={fieldName}
-                    value={formData[fieldName]}
-                    onChange={handleChange}
-                    className="input-field"
-                    disabled={loading || submitting}
-                  >
-                    <option value="">Select...</option>
-                    {formOptions?.[fieldName]?.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    name={fieldName}
-                    type={isNumber ? 'number' : 'text'}
-                    min={isNumber ? '0' : undefined}
-                    step={fieldName === 'avg_glucose_level' ? '0.01' : '0.1'}
-                    value={formData[fieldName]}
-                    onChange={handleChange}
-                    className="input-field"
-                    disabled={loading || submitting}
-                  />
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Submit button */}
-        <div className="flex gap-4 pt-4">
+      <div className="relative">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 md:mb-8 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shadow-lg shrink-0"
+                 style={{ background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--secondary)))' }}>
+              <Stethoscope className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-lg md:text-2xl font-bold text-[rgb(var(--card-foreground))] leading-tight">Patient Assessment</h3>
+              <p className="text-xs md:text-sm text-[rgb(var(--muted-foreground))] leading-tight mt-0.5">Enter clinical information for risk analysis</p>
+            </div>
+          </div>
           <button
-            type="submit"
-            disabled={submitting || loading}
-            className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            onClick={handleLoadSample}
+            disabled={!samplePatient || loading}
+            className="flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 shadow-md hover:shadow-lg whitespace-nowrap"
+            style={{ 
+              background: 'rgba(var(--accent), 0.1)',
+              color: 'rgb(var(--accent))'
+            }}
           >
-            {submitting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <Activity className="w-5 h-5" />
-                Predict Risk
-              </>
-            )}
+            <UserPlus className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Load Sample Patient</span>
+            <span className="sm:hidden">Sample</span>
           </button>
         </div>
-      </form>
+
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm font-medium"
+          >
+            {error}
+          </motion.div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
+          {/* Section navigation */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin -mx-2 px-2">
+            {sections.map((section, index) => {
+              const Icon = section.icon
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setCurrentSection(index)}
+                  className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-semibold whitespace-nowrap transition-all shadow-md ${
+                    currentSection === index
+                      ? 'text-white shadow-lg scale-105'
+                      : 'bg-[rgb(var(--muted))] text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--border))]'
+                  }`}
+                  style={currentSection === index ? {
+                    background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--secondary)))'
+                  } : {}}
+                >
+                  <Icon className="w-3 h-3 md:w-4 md:h-4" />
+                  <span className="hidden sm:inline">{section.title}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Form fields with animation */}
+          <motion.div
+            key={currentSection}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          >
+            {sections[currentSection].fields.map((fieldName) => {
+              const isSelect = ['gender', 'hypertension', 'heart_disease', 'ever_married', 'work_type', 'Residence_type', 'smoking_status'].includes(fieldName)
+              const isNumber = ['age', 'avg_glucose_level', 'bmi'].includes(fieldName)
+
+              return (
+                <div key={fieldName} className="space-y-2">
+                  <label className="block text-sm font-semibold text-[rgb(var(--card-foreground))]">
+                    {fieldLabels[fieldName]}
+                  </label>
+                  {isSelect ? (
+                    <select
+                      name={fieldName}
+                      value={formData[fieldName]}
+                      onChange={handleChange}
+                      className="input-field"
+                      disabled={loading || submitting}
+                    >
+                      <option value="">Select...</option>
+                      {formOptions?.[fieldName]?.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      name={fieldName}
+                      type={isNumber ? 'number' : 'text'}
+                      min={isNumber ? '0' : undefined}
+                      step={fieldName === 'avg_glucose_level' ? '0.01' : '0.1'}
+                      value={formData[fieldName]}
+                      onChange={handleChange}
+                      className="input-field"
+                      disabled={loading || submitting}
+                      placeholder={isNumber ? 'Enter value...' : 'Enter text...'}
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </motion.div>
+
+          {/* Progress indicator */}
+          <div className="flex gap-2 justify-center">
+            {sections.map((_, index) => (
+              <div
+                key={index}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  index === currentSection ? 'w-8' : 'w-1.5'
+                }`}
+                style={{
+                  background: index === currentSection 
+                    ? 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--accent)))'
+                    : 'rgb(var(--border))'
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Submit button */}
+          <div className="flex gap-4 pt-4">
+            <button
+              type="submit"
+              disabled={submitting || loading}
+              className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed py-3 md:py-4 text-base md:text-lg"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
+                  <span className="hidden sm:inline">Analyzing Patient Data...</span>
+                  <span className="sm:hidden">Analyzing...</span>
+                </>
+              ) : (
+                <>
+                  <BrainCircuit className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">Predict Stroke Risk</span>
+                  <span className="sm:hidden">Predict Risk</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </motion.div>
   )
 }
